@@ -1,5 +1,7 @@
 # PronounceAI System Architecture
 
+**Live Demo**: [https://pronounce-ai-sandy.vercel.app/](https://pronounce-ai-sandy.vercel.app/)
+
 This document describes the architecture of PronounceAI, a client-side web application designed to evaluate English pronunciation for language learners without relying on third-party APIs.
 
 ## System Components

@@ -1,6 +1,7 @@
 <div align="center">
   <h1>🎙️ PronounceAI</h1>
   <p><strong>100% Client-Side. Zero APIs. Instant Pronunciation Feedback.</strong></p>
+  <p><strong>Live Demo: <a href="https://pronounce-ai-sandy.vercel.app/">pronounce-ai-sandy.vercel.app</a></strong></p>
   
   <p>
     <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js" alt="Next.js" /></a>
