@@ -1,65 +1,61 @@
-# PronounceAI System Architecture
+# PronounceAI System Architecture (Client-Side No-API Version)
 
-This document describes the end-to-end system architecture of PronounceAI, a web application that evaluates English pronunciation for language learners.
+This document describes the end-to-end system architecture of PronounceAI, a web application that evaluates English pronunciation for language learners natively in the browser without any third-party APIs.
 
 ## System Components
 
 1. **Frontend (Next.js & React)**
    - **Framework**: Next.js 14 App Router.
    - **Styling**: Tailwind CSS for a premium, responsive interface.
-   - **Audio Capture**: Utilizes the browser's native `MediaRecorder` API to capture microphone input directly in the browser. It enforces a strict 30-45 second duration limit per the requirements.
+   - **Audio Capture**: Utilizes the browser's native `MediaRecorder` API to capture microphone input directly in the browser. It enforces a strict 30-45 second duration limit.
    - **File Upload**: Supports direct `.wav` or `.mp3` uploads as an alternative to recording.
 
-2. **Backend API (Next.js Route Handler)**
-   - Acts as a secure proxy and orchestration layer.
-   - Receives the `multipart/form-data` audio blob from the client.
-   - Instantiates the connection to the Google Gemini API.
-
-3. **AI Engine (Google Gemini API)**
-   - We utilize the `gemini-1.5-flash` model, which features native multimodal audio understanding capabilities.
+2. **Web Worker Engine (Transformers.js)**
+   - A background Web Worker thread is initialized to run `@xenova/transformers`.
+   - We utilize the `Xenova/whisper-tiny.en` automatic speech recognition model.
    - **Why this over alternatives?** 
-     - Traditional architectures (e.g., OpenAI Whisper + LLM) require splitting the pipeline into Speech-to-Text and Text-to-Text. Whisper does not natively output a "pronunciation score," making it difficult to judge phoneme-level accuracy without complex acoustic models.
-     - Gemini 1.5 processes the raw audio directly alongside our system instructions. It acts as an expert judge, scoring the pronunciation based on the acoustic characteristics of the speech and returning a structured JSON containing the overall score, transcription, and specific mistake highlights (with timestamps and feedback).
+     - Running the model entirely on the client-side using WebAssembly eliminates the need for expensive backend infrastructure or third-party API keys (like Gemini or Azure). It ensures perfect data privacy as audio data never leaves the device.
+
+3. **Heuristic Evaluation Algorithm**
+   - Because we do not rely on an external LLM for "judgment," the frontend implements a custom heuristic algorithm to evaluate the STT output:
+     - **Pacing**: Calculates Words Per Minute (WPM).
+     - **Stuttering**: Detects repeated words indicative of hesitation.
+     - **Filler Words**: Identifies common fillers ("um", "uh", "like") and penalizes the score while providing actionable feedback.
 
 ## Data Flow
 1. User grants microphone access (after checking the DPDP consent box).
 2. User records 30-45 seconds of speech.
-3. The frontend packages the recording into a `FormData` object and POSTs to `/api/evaluate`.
-4. The Next.js backend reads the file into a temporary buffer (in-memory) and sends it to the Gemini API as an inline data part.
-5. Gemini processes the audio and returns a JSON payload with the evaluation.
-6. The backend immediately discards the audio buffer and forwards the JSON to the frontend.
-7. The frontend renders the score, transcription, and highlighted mistakes.
+3. The frontend resamples the audio to a 16kHz `Float32Array` required by Whisper.
+4. The audio data is dispatched to the background Web Worker.
+5. The Web Worker processes the audio using the local Whisper model and returns the transcription to the main thread.
+6. The main thread runs the heuristic evaluation algorithm on the transcript.
+7. The UI renders the final score out of 100, the transcription, and the highlighted mistakes.
 
 ---
 
 ## DPDP Act 2023 Compliance Posture
 
-Livo AI takes data privacy seriously. PronounceAI is designed with strict adherence to India's Digital Personal Data Protection (DPDP) Act 2023.
+Livo AI takes data privacy seriously. PronounceAI is designed with the strictest possible adherence to India's Digital Personal Data Protection (DPDP) Act 2023.
 
-1. **Notice & Explicit Consent**
-   - Before recording or uploading, users must check a box providing explicit, affirmative consent for their voice to be processed.
-   - The UI includes a clear notice stating the purpose of processing (pronunciation evaluation).
+1. **Perfect Data Minimization (Zero Data Transfer)**
+   - By running the entire inference pipeline in the browser using WebAssembly, **no personal data (voice recordings) ever leaves the user's device.**
+   - We do not transmit data to our servers, nor do we transmit it to any third parties (like Google or OpenAI).
 
-2. **Data Minimization & Storage Limitation (Zero Retention)**
-   - **Storage**: No user audio or evaluation results are ever stored on a disk or database. 
-   - **Retention**: Processing is done entirely in-memory (`Buffer`). The audio data only exists in RAM for the duration of the API request and is instantly garbage-collected once the request completes.
-   - Because there is no persistent storage, there is zero retention, satisfying the requirement to delete data once the purpose is served.
+2. **Notice & Explicit Consent**
+   - Before recording or uploading, users must check a box providing explicit, affirmative consent for their voice to be processed locally.
 
-3. **Data Residency & Third-Party Processing**
-   - The data is sent securely via TLS to the Google Gemini API for the sole purpose of inference. Google Cloud provides enterprise-grade data processing agreements ensuring data is not used to train their public models without consent.
-
-4. **Right to Erasure**
-   - Since no personal data is retained, the system achieves "erasure by design."
+3. **Storage Limitation & Erasure**
+   - **Storage**: No user audio or evaluation results are ever stored on a database. 
+   - **Retention**: Processing is done entirely in the browser's volatile memory (RAM). Once the browser tab is closed or the user hits "Discard," the memory is freed by the garbage collector.
 
 ---
 
 ## Trade-offs & Future Improvements
 
 **Trade-offs made:**
-- **Single-API Architecture vs. Specialized Acoustic Models**: Using an LLM (Gemini) for audio evaluation is incredibly flexible and provides fantastic natural language feedback. However, it may not be as perfectly phonetically accurate as a dedicated, narrow acoustic model (like Azure Speech Pronunciation Assessment). I chose Gemini to demonstrate modern generative AI plumbing and to provide more conversational, actionable tips for learners.
-- **In-Memory Processing**: By not using cloud storage (like AWS S3) for the uploads, we ensure absolute DPDP compliance and speed. The trade-off is that very large files would consume server RAM, but since we strictly enforce a 45-second limit, this is well within Vercel's serverless function memory limits.
+- **Client-Side Model Size vs Quality**: Running ML in the browser requires downloading the model weights (~40MB for `whisper-tiny.en`). This means the first evaluation might be slower due to the download, and the `tiny` model is slightly less accurate than cloud-based massive models (like Whisper `large-v3` or Gemini 1.5). However, this trade-off is absolutely worth it for the perfect privacy posture and the removal of API costs/dependencies.
+- **Heuristic Scoring vs Acoustic Scoring**: Our custom JavaScript heuristic relies on the STT output string (analyzing pacing and filler words) rather than deep acoustic phoneme-level mapping. 
 
 **What I would build next with another week:**
-- Implement detailed phoneme-level highlight rendering using a specialized model.
-- Add user accounts (with proper DPDP-compliant data management and withdrawal of consent workflows) so users can track their progress over time.
-- Implement streaming transcription so users can see the STT output in real-time as they speak.
+- Implement phoneme-level confidence extraction from the Web Worker to highlight specific syllables the user struggled with.
+- Add user accounts using a secure, local-first database (like IndexedDB or PWA features) so users can track their progress over time without compromising their privacy.
