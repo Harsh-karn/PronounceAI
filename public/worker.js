@@ -1,6 +1,9 @@
-import { pipeline, env } from "@xenova/transformers";
+importScripts("https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/transformers.min.js");
 
-// Tell transformers to load from our local public folder instead of huggingface
+console.log("[Worker] Script loaded and executing from public directory!");
+
+const { pipeline, env } = self.transformers;
+
 env.allowRemoteModels = false;
 env.localModelPath = "/models/";
 env.useBrowserCache = true;
@@ -8,10 +11,11 @@ env.useBrowserCache = true;
 class PipelineSingleton {
   static task = "automatic-speech-recognition";
   static model = "Xenova/whisper-tiny.en";
-  static instance: any = null;
+  static instance = null;
 
-  static async getInstance(progress_callback: any) {
+  static async getInstance(progress_callback) {
     if (this.instance === null) {
+      console.log("[Worker] Pipeline initializing...");
       this.instance = pipeline(this.task, this.model, { progress_callback });
     }
     return this.instance;
@@ -20,29 +24,32 @@ class PipelineSingleton {
 
 self.addEventListener("message", async (event) => {
   const message = event.data;
+  console.log("[Worker] Received message:", message.type);
   
   if (message.type === "load") {
     try {
-      const transcriber = await PipelineSingleton.getInstance((x: any) => {
-        // Post progress back to main thread
+      console.log("[Worker] Starting model load...");
+      const transcriber = await PipelineSingleton.getInstance((x) => {
+        console.log("[Worker] Progress:", x);
         self.postMessage({ type: "progress", data: x });
       });
       self.postMessage({ type: "loaded" });
-    } catch (err: any) {
-      self.postMessage({ type: "error", error: err.message });
+    } catch (err) {
+      console.error("[Worker] Load Error:", err);
+      self.postMessage({ type: "error", error: err.message || err.toString() });
     }
   } else if (message.type === "transcribe") {
     try {
       const transcriber = await PipelineSingleton.getInstance(null);
-      // The audioData is a Float32Array
       const output = await transcriber(message.audioData, {
         chunk_length_s: 30,
         stride_length_s: 5,
-        return_timestamps: true, // Word-level or segment-level timestamps
+        return_timestamps: true,
       });
       self.postMessage({ type: "result", data: output });
-    } catch (err: any) {
-      self.postMessage({ type: "error", error: err.message });
+    } catch (err) {
+      console.error("[Worker] Transcribe Error:", err);
+      self.postMessage({ type: "error", error: err.message || err.toString() });
     }
   }
 });

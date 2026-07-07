@@ -38,12 +38,11 @@ export default function Home() {
   // Initialize Web Worker
   useEffect(() => {
     if (typeof window !== "undefined") {
-      worker.current = new Worker(new URL("./worker.ts", import.meta.url), {
-        type: "module",
-      });
+      worker.current = new Worker("/worker.js");
 
       worker.current.onmessage = (e) => {
         const msg = e.data;
+        console.log("[Main] Received message from worker:", msg.type, msg);
         if (msg.type === "progress") {
           setModelStatus("loading");
           if (msg.data && msg.data.file) {
