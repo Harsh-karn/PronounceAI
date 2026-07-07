@@ -24,7 +24,7 @@ export default function Home() {
   
   // WebML state
   const [modelStatus, setModelStatus] = useState<"idle" | "loading" | "ready">("idle");
-  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [downloads, setDownloads] = useState<Record<string, { loaded: number, total: number }>>({});
   const [isEvaluating, setIsEvaluating] = useState(false);
   
   const [result, setResult] = useState<EvaluationResult | null>(null);
@@ -46,13 +46,14 @@ export default function Home() {
         const msg = e.data;
         if (msg.type === "progress") {
           setModelStatus("loading");
-          // transformers.js progress structure varies, try to calculate an average
-          if (msg.data && msg.data.progress) {
-             setLoadingProgress(msg.data.progress);
+          if (msg.data && msg.data.file) {
+            setDownloads((prev) => ({
+              ...prev,
+              [msg.data.file]: { loaded: msg.data.loaded || 0, total: msg.data.total || 0 }
+            }));
           }
         } else if (msg.type === "loaded") {
           setModelStatus("ready");
-          setLoadingProgress(100);
         } else if (msg.type === "result") {
           processSTTResult(msg.data);
         } else if (msg.type === "error") {
@@ -214,6 +215,10 @@ export default function Home() {
     setError(null);
   };
 
+  const totalLoadedBytes = Object.values(downloads).reduce((acc, curr) => acc + curr.loaded, 0);
+  const totalModelBytes = Object.values(downloads).reduce((acc, curr) => acc + curr.total, 0);
+  const loadingProgress = totalModelBytes > 0 ? (totalLoadedBytes / totalModelBytes) * 100 : 0;
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans p-6 md:p-12">
       <main className="max-w-3xl mx-auto space-y-12">
@@ -237,7 +242,7 @@ export default function Home() {
               </p>
             </div>
             
-            {loadingProgress > 0 && (
+            {totalModelBytes > 0 && (
               <div className="w-full max-w-xs space-y-2 mt-2">
                 <div className="flex justify-between text-xs font-medium text-blue-700">
                   <span>Downloading...</span>
@@ -248,6 +253,9 @@ export default function Home() {
                     className="bg-blue-600 h-full transition-all duration-300"
                     style={{ width: `${loadingProgress}%` }}
                   />
+                </div>
+                <div className="text-center text-xs font-medium text-blue-600 mt-1">
+                  {(totalLoadedBytes / 1024 / 1024).toFixed(1)} MB / {(totalModelBytes / 1024 / 1024).toFixed(1)} MB
                 </div>
               </div>
             )}
