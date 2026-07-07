@@ -1,7 +1,9 @@
 import { pipeline, env } from "@xenova/transformers";
 
-// Disable local models to pull from HF Hub
-env.allowLocalModels = false;
+// Tell transformers to load from our local public folder instead of huggingface
+env.allowRemoteModels = false;
+env.allowLocalModels = true;
+env.localModelPath = "/models/";
 env.useBrowserCache = true;
 
 class PipelineSingleton {
