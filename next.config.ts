@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Override webpack config for @xenova/transformers
+  // Override webpack config for @xenova/transformers (when running without Turbopack)
   webpack: (config) => {
     config.resolve.alias = {
         ...config.resolve.alias,
@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
     }
     return config;
   },
+  // Silence Turbopack warning
+  turbopack: {}
 };
 
 export default nextConfig;
