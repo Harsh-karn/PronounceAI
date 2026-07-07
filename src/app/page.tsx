@@ -38,7 +38,7 @@ export default function Home() {
   // Initialize Web Worker
   useEffect(() => {
     if (typeof window !== "undefined") {
-      worker.current = new Worker("/worker.js");
+      worker.current = new Worker("/worker.js", { type: "module" });
 
       worker.current.onmessage = (e) => {
         const msg = e.data;

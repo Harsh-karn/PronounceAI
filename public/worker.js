@@ -1,12 +1,11 @@
-importScripts("https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/transformers.min.js");
+import { pipeline, env } from "/transformers/transformers.js";
 
 console.log("[Worker] Script loaded and executing from public directory!");
-
-const { pipeline, env } = self.transformers;
 
 env.allowRemoteModels = false;
 env.localModelPath = "/models/";
 env.useBrowserCache = true;
+env.backends.onnx.wasm.wasmPaths = "/transformers/";
 
 class PipelineSingleton {
   static task = "automatic-speech-recognition";
