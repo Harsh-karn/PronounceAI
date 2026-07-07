@@ -63,6 +63,12 @@ export default function Home() {
         }
       };
 
+      worker.current.onerror = (err) => {
+        console.error("Worker initialization error:", err);
+        setError("Worker failed to start. This might be a browser compatibility issue or Turbopack error.");
+        setModelStatus("error");
+      };
+
       // Start loading the model in the background
       worker.current.postMessage({ type: "load" });
     }
@@ -264,20 +270,26 @@ export default function Home() {
               </p>
             </div>
             
-            {totalModelBytes > 0 && (
+            {(totalModelBytes > 0 || totalLoadedBytes > 0) && (
               <div className="w-full max-w-xs space-y-2 mt-2">
                 <div className="flex justify-between text-xs font-medium text-blue-700">
                   <span>Downloading...</span>
-                  <span>{Math.round(loadingProgress)}%</span>
+                  <span>{totalModelBytes > 0 ? `${Math.round(loadingProgress)}%` : 'Unknown total size'}</span>
                 </div>
-                <div className="w-full bg-blue-200 h-2 rounded-full overflow-hidden">
-                  <div 
-                    className="bg-blue-600 h-full transition-all duration-300"
-                    style={{ width: `${loadingProgress}%` }}
-                  />
-                </div>
+                {totalModelBytes > 0 ? (
+                  <div className="w-full bg-blue-200 h-2 rounded-full overflow-hidden">
+                    <div 
+                      className="bg-blue-600 h-full transition-all duration-300"
+                      style={{ width: `${loadingProgress}%` }}
+                    />
+                  </div>
+                ) : (
+                  <div className="w-full bg-blue-200 h-2 rounded-full overflow-hidden relative">
+                    <div className="bg-blue-600 h-full w-1/2 animate-pulse absolute rounded-full" />
+                  </div>
+                )}
                 <div className="text-center text-xs font-medium text-blue-600 mt-1">
-                  {(totalLoadedBytes / 1024 / 1024).toFixed(1)} MB / {(totalModelBytes / 1024 / 1024).toFixed(1)} MB
+                  {(totalLoadedBytes / 1024 / 1024).toFixed(1)} MB {totalModelBytes > 0 ? `/ ${(totalModelBytes / 1024 / 1024).toFixed(1)} MB` : ' downloaded'}
                 </div>
               </div>
             )}
