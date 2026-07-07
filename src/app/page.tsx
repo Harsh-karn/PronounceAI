@@ -23,7 +23,7 @@ export default function Home() {
   const [consentGiven, setConsentGiven] = useState(false);
   
   // WebML state
-  const [modelStatus, setModelStatus] = useState<"idle" | "loading" | "ready">("idle");
+  const [modelStatus, setModelStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [downloads, setDownloads] = useState<Record<string, { loaded: number, total: number }>>({});
   const [isEvaluating, setIsEvaluating] = useState(false);
   
@@ -57,8 +57,9 @@ export default function Home() {
         } else if (msg.type === "result") {
           processSTTResult(msg.data);
         } else if (msg.type === "error") {
-          setError(`AI Engine Error: ${msg.error}`);
-          setIsEvaluating(false);
+          console.error("Worker error:", msg.error);
+          setError(msg.error);
+          setModelStatus("error");
         }
       };
 
@@ -231,7 +232,28 @@ export default function Home() {
           </p>
         </header>
 
-        {modelStatus !== "ready" && (
+        {modelStatus === "error" && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-6 flex flex-col items-center justify-center space-y-4">
+            <div className="text-center space-y-2">
+              <h3 className="font-semibold text-red-900">Failed to Load AI Model</h3>
+              <p className="text-sm text-red-800 max-w-sm">
+                {error || "An unknown error occurred while downloading the model."}
+              </p>
+            </div>
+            <button 
+              onClick={() => {
+                setError(null);
+                setModelStatus("loading");
+                worker.current?.postMessage({ type: "load" });
+              }}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition"
+            >
+              Retry Download
+            </button>
+          </div>
+        )}
+
+        {(modelStatus === "idle" || modelStatus === "loading") && (
           <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 flex flex-col items-center justify-center space-y-4">
             <Loader2 className="text-blue-500 animate-spin" size={32} />
             <div className="text-center space-y-1">
