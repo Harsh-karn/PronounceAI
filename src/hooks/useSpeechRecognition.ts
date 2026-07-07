@@ -87,7 +87,7 @@ export function useSpeechRecognition() {
             if (originalOnMessage) worker.current!.onmessage = originalOnMessage;
           } else if (originalOnMessage) {
              // Pass through other messages
-             originalOnMessage.call(worker.current, e);
+             originalOnMessage.call(worker.current!, e);
           }
         };
         

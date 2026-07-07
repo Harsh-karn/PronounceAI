@@ -1,19 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Override for Turbopack
-  experimental: {
-    turbopack: {
-      resolveAlias: {
-        "fs": false,
-        "path": false,
-        "url": false,
-        "onnxruntime-node": false,
-        "sharp": false,
-      },
-    },
-  },
-  // Override webpack config for @xenova/transformers (when running without Turbopack)
+  // Override webpack config for @xenova/transformers (when running without Turbopack or during build)
   webpack: (config) => {
     config.resolve.alias = {
         ...config.resolve.alias,
@@ -22,7 +10,7 @@ const nextConfig: NextConfig = {
     }
     return config;
   },
-  // Silence Turbopack warning
+  // Silence Turbopack warning about having a webpack config without a turbopack config
   turbopack: {}
 };
 
