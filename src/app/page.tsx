@@ -227,18 +227,30 @@ export default function Home() {
         </header>
 
         {modelStatus !== "ready" && (
-          <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex flex-col items-center justify-center space-y-3">
-            <Loader2 className="text-blue-500 animate-spin" size={24} />
-            <p className="text-sm font-medium text-blue-900 text-center">
-              Downloading On-Device AI Model (Privacy First)... <br/>
-              <span className="text-blue-700 font-normal">{Math.round(loadingProgress)}%</span>
-            </p>
-            <div className="w-full max-w-xs bg-blue-200 h-1.5 rounded-full overflow-hidden">
-              <div 
-                className="bg-blue-600 h-full transition-all duration-300"
-                style={{ width: `${loadingProgress}%` }}
-              />
+          <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 flex flex-col items-center justify-center space-y-4">
+            <Loader2 className="text-blue-500 animate-spin" size={32} />
+            <div className="text-center space-y-1">
+              <h3 className="font-semibold text-blue-900">Downloading On-Device AI Model</h3>
+              <p className="text-sm text-blue-800/80 max-w-sm">
+                This is a one-time ~40MB download to your browser's secure cache. 
+                Subsequent visits will load instantly!
+              </p>
             </div>
+            
+            {loadingProgress > 0 && (
+              <div className="w-full max-w-xs space-y-2 mt-2">
+                <div className="flex justify-between text-xs font-medium text-blue-700">
+                  <span>Downloading...</span>
+                  <span>{Math.round(loadingProgress)}%</span>
+                </div>
+                <div className="w-full bg-blue-200 h-2 rounded-full overflow-hidden">
+                  <div 
+                    className="bg-blue-600 h-full transition-all duration-300"
+                    style={{ width: `${loadingProgress}%` }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )}
 
