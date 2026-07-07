@@ -1,0 +1,3 @@
+# PronounceAI
+
+PronounceAI project repository.
