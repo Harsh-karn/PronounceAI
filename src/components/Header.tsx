@@ -5,7 +5,7 @@ export function Header() {
         Pronounce<span className="text-blue-600">AI</span>
       </h1>
       <p className="text-lg text-slate-600">
-        100% Client-Side. Zero APIs. Speak for 30-45 seconds in English to get instant feedback.
+        Powered by Gemini AI. Speak for 30-45 seconds in English to get instant feedback on your pronunciation.
       </p>
     </header>
   );

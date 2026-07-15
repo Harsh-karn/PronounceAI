@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Header } from "../components/Header";
-import { ModelDownloadProgress } from "../components/ModelDownloadProgress";
 import { PrivacyConsent } from "../components/PrivacyConsent";
 import { RecorderInterface } from "../components/RecorderInterface";
 import { EvaluationResults } from "../components/EvaluationResults";
@@ -26,15 +25,11 @@ export default function Home() {
   } = useAudioRecorder(45);
 
   const {
-    modelStatus,
-    downloads,
     isEvaluating,
     result,
     error: speechError,
-    setError: setSpeechError,
     evaluateAudio,
     resetResult,
-    setModelStatus
   } = useSpeechRecognition();
 
   const handleStartRecording = () => {
@@ -78,7 +73,7 @@ export default function Home() {
       setRecorderError(`Please provide a longer audio clip (at least 30 seconds). Yours was ~${recordingTime}s.`);
       return;
     }
-    evaluateAudio(audioBlob, recordingTime);
+    evaluateAudio(audioBlob);
   };
 
   const handleReset = () => {
@@ -93,52 +88,38 @@ export default function Home() {
       <main className="max-w-3xl mx-auto space-y-12">
         <Header />
 
-        <ModelDownloadProgress 
-          modelStatus={modelStatus} 
-          downloads={downloads} 
-          error={speechError} 
-          onRetry={() => {
-            setSpeechError(null);
-            setModelStatus("idle");
-            // A full page reload is safest to retry initialization if worker failed
-            window.location.reload(); 
-          }} 
-        />
-
-        {displayError && modelStatus !== "error" && (
+        {displayError && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-800 text-center shadow-sm">
             {displayError}
           </div>
         )}
 
-        {modelStatus === "ready" && (
-          <div className="space-y-8 animate-in fade-in duration-700">
-            {!result ? (
-              <>
-                <PrivacyConsent 
-                  consentGiven={consentGiven} 
-                  onConsentChange={setConsentGiven} 
-                />
-                
-                <RecorderInterface
-                  isRecording={isRecording}
-                  recordingTime={recordingTime}
-                  hasAudio={!!audioBlob}
-                  isEvaluating={isEvaluating}
-                  onStartRecording={handleStartRecording}
-                  onStopRecording={stopRecording}
-                  onSubmit={handleSubmitAudio}
-                  onFileUpload={handleFileUpload}
-                />
-              </>
-            ) : (
-              <EvaluationResults 
-                result={result} 
-                onReset={handleReset} 
+        <div className="space-y-8 animate-in fade-in duration-700">
+          {!result ? (
+            <>
+              <PrivacyConsent 
+                consentGiven={consentGiven} 
+                onConsentChange={setConsentGiven} 
               />
-            )}
-          </div>
-        )}
+              
+              <RecorderInterface
+                isRecording={isRecording}
+                recordingTime={recordingTime}
+                hasAudio={!!audioBlob}
+                isEvaluating={isEvaluating}
+                onStartRecording={handleStartRecording}
+                onStopRecording={stopRecording}
+                onSubmit={handleSubmitAudio}
+                onFileUpload={handleFileUpload}
+              />
+            </>
+          ) : (
+            <EvaluationResults 
+              result={result} 
+              onReset={handleReset} 
+            />
+          )}
+        </div>
       </main>
     </div>
   );

@@ -15,8 +15,7 @@ export function PrivacyConsent({ consentGiven, onConsentChange }: PrivacyConsent
             Perfect Privacy (DPDP Act 2023 Compliant)
           </h3>
           <p className="text-xs text-blue-700 leading-relaxed max-w-xl">
-            Your audio is processed entirely on your device using a WebAssembly ML model. 
-            No audio is ever uploaded to any server.
+            Your audio is securely sent to Gemini AI for processing. We do not store your audio recordings after the evaluation is complete.
           </p>
           <label className="flex items-center gap-2 mt-3 cursor-pointer group">
             <input 
@@ -26,7 +25,7 @@ export function PrivacyConsent({ consentGiven, onConsentChange }: PrivacyConsent
               className="w-4 h-4 rounded border-blue-300 text-blue-600 focus:ring-blue-600 cursor-pointer"
             />
             <span className="text-sm text-blue-800 font-medium group-hover:text-blue-900 transition-colors">
-              I understand and consent to local processing.
+              I understand and consent to processing my audio with Gemini AI.
             </span>
           </label>
         </div>

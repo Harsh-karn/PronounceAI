@@ -1,6 +1,6 @@
 import { RotateCcw, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
-import { EvaluationResult } from "../types";
+import { EvaluationResult, Mistake } from "../types";
 
 interface EvaluationResultsProps {
   result: EvaluationResult;
@@ -18,6 +18,47 @@ export function EvaluationResults({ result, onReset }: EvaluationResultsProps) {
     if (score >= 90) return "bg-green-50 border-green-200";
     if (score >= 70) return "bg-yellow-50 border-yellow-200";
     return "bg-red-50 border-red-200";
+  };
+
+  const renderHighlightedTranscription = (transcription: string, mistakes: Mistake[]) => {
+    if (!mistakes || mistakes.length === 0) return <span>&quot;{transcription}&quot;</span>;
+
+    // Sort by length descending to match longer phrases first
+    const sortedMistakes = [...mistakes]
+      .filter(m => m.segment)
+      .sort((a, b) => b.segment.length - a.segment.length);
+
+    if (sortedMistakes.length === 0) return <span>&quot;{transcription}&quot;</span>;
+
+    const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const segments = sortedMistakes.map(m => escapeRegExp(m.segment));
+    
+    // Create regex capturing group to split and keep the matched segments
+    const regex = new RegExp(`(${segments.join('|')})`, 'gi');
+    const parts = transcription.split(regex);
+
+    return (
+      <span>
+        &quot;
+        {parts.map((part, i) => {
+          const lowerPart = part.toLowerCase();
+          const mistake = sortedMistakes.find(m => m.segment.toLowerCase() === lowerPart);
+          if (mistake) {
+            return (
+              <span 
+                key={i} 
+                className="bg-red-100 text-red-800 font-semibold px-1 mx-0.5 rounded border border-red-200 cursor-help transition-colors hover:bg-red-200 inline-block"
+                title={`${mistake.issue}: ${mistake.tip}`}
+              >
+                {part}
+              </span>
+            );
+          }
+          return <span key={i}>{part}</span>;
+        })}
+        &quot;
+      </span>
+    );
   };
 
   return (
@@ -51,7 +92,7 @@ export function EvaluationResults({ result, onReset }: EvaluationResultsProps) {
         <div className="flex-1 space-y-3 text-center md:text-left">
           <h2 className="text-2xl font-bold text-slate-800">Transcription</h2>
           <div className="bg-white/60 p-4 rounded-xl border border-white/40 text-slate-700 leading-relaxed italic shadow-sm">
-            "{result.transcription}"
+            {renderHighlightedTranscription(result.transcription, result.mistakes)}
           </div>
         </div>
       </div>
@@ -67,7 +108,7 @@ export function EvaluationResults({ result, onReset }: EvaluationResultsProps) {
               <div key={idx} className="p-6 flex flex-col md:flex-row gap-4 hover:bg-slate-50/50 transition-colors">
                 <div className="md:w-1/3 space-y-1">
                   <div className="inline-flex px-2.5 py-1 rounded-md bg-red-50 text-red-700 text-sm font-bold font-mono border border-red-100">
-                    "{mistake.segment}"
+                    &quot;{mistake.segment}&quot;
                   </div>
                   <div className="text-sm font-medium text-slate-500 uppercase tracking-wide text-xs">
                     {mistake.issue}
@@ -83,7 +124,7 @@ export function EvaluationResults({ result, onReset }: EvaluationResultsProps) {
       ) : (
         <div className="bg-green-50 border border-green-200 rounded-2xl p-8 text-center space-y-2">
           <h3 className="text-xl font-bold text-green-800">Perfect Pronunciation!</h3>
-          <p className="text-green-700">We couldn't detect any major pronunciation issues or filler words.</p>
+          <p className="text-green-700">We couldn&apos;t detect any major pronunciation issues or filler words.</p>
         </div>
       )}
 

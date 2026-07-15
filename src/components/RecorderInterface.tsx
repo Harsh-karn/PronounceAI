@@ -29,7 +29,7 @@ export function RecorderInterface({
         <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
         <div className="text-center space-y-1">
           <h2 className="text-lg font-semibold text-slate-800">Evaluating Pronunciation...</h2>
-          <p className="text-sm text-slate-500">Transcribing and analyzing heuristics natively.</p>
+          <p className="text-sm text-slate-500">Transcribing and analyzing with Gemini AI...</p>
         </div>
       </div>
     );
